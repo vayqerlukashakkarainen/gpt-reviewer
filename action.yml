@@ -38,4 +38,4 @@ runs:
         GITHUB_REPOSITORY: ${{ inputs.repository }}
         PR_NUMBER: ${{ inputs.pr_number }}
         COMMIT_ID: ${{ inputs.commit_id }}
-      run: python main.py
+      run: python "${{ github.action_path }}/main.py"
