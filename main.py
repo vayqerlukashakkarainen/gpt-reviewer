@@ -1,0 +1,126 @@
+import os
+import requests
+from openai import OpenAI
+
+GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
+GITHUB_REPOSITORY = os.environ["GITHUB_REPOSITORY"]
+PR_NUMBER = os.environ["PR_NUMBER"]
+COMMIT_ID = os.environ["COMMIT_ID"]
+OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+def get_pr_files():
+    url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/pulls/{PR_NUMBER}/files"
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json"
+    }
+    r = requests.get(url, headers=headers)
+    r.raise_for_status()
+    return r.json()
+
+def load_rules():
+    with open(".project-rules.md", "r") as f:
+        return f.read()
+
+def get_ai_review(rules, filename, patch):
+    prompt = f"""
+        You are a strict code reviewer. Below are the project rules:
+
+        {rules}
+
+        Here is a code diff for the file `{filename}`:
+
+        ```
+        {patch}
+        ```
+
+        Identify any rule violations based on the provided rules. For each one, return only a JSON like:
+        [
+        {{
+            "line": <line number in the diff>,
+            "comment": "<suggestion or warning>"
+        }},
+        ...
+        ]
+
+        You must only return raw JSON.
+        Do not use any markdown formatting.
+        Do not explain anything.
+        Do not include comments or pre/post text.
+        """
+        
+    print(prompt)
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2
+    )
+    return response.choices[0].message.content
+
+def post_inline_comment(comment, path, line):
+    url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/pulls/{PR_NUMBER}/comments"
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json"
+    }
+    data = {
+        "body": comment,
+        "commit_id": COMMIT_ID,
+        "path": path,
+        "line": line
+    }
+    res = requests.post(url, headers=headers, json=data)
+    if res.status_code == 201:
+        print(f"✅ Comment posted on {path} @ {line}")
+    else:
+        print(f"❌ Error: {res.status_code} - {res.text}")
+        
+def get_pr_additions_only(files):
+    additions_by_file = {}
+
+    for file in files:
+        if file.get("patch") is None:
+            continue
+        
+        patch = file["patch"]
+        filename = file["filename"]
+        
+        additions = [
+            line for line in patch.splitlines(True)
+            if line.startswith("+")
+        ]
+        
+        add_str = "".join(additions)
+        
+        if additions:
+            additions_by_file[filename] = add_str
+
+    return additions_by_file
+
+def main():
+    rules = load_rules()
+    files = get_pr_files()
+    additions = get_pr_additions_only(files)
+
+    for file in files:
+        if file.get("patch") is None:
+            continue
+
+        filename = file["filename"]
+        patch = additions[filename]
+
+        ai_output = get_ai_review(rules, filename, patch)
+
+        try:
+            import json
+            suggestions = json.loads(ai_output)
+            for suggestion in suggestions:
+                print(f"👉 Posting suggestion {suggestion}")
+                post_inline_comment(suggestion["comment"], filename, suggestion["line"])
+        except Exception as e:
+            print(f"⚠️ Could not parse suggestions for {filename}: {e}\nAI Output:\n{ai_output}")
+
+if __name__ == "__main__":
+    main()

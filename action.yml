@@ -1,0 +1,45 @@
+name: AI PR Review
+description: "A custom action that greets a user using Python"
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        required: true
+        type: string
+      pr_number:
+        required: true
+        type: string
+      commit_id:
+        required: true
+        type: string
+    secrets:
+      github_token:
+        required: true
+      ai_api_key:
+        required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: pip install openai requests
+      shell: bash
+
+    - name: Run AI Reviewer
+      env:
+        GITHUB_TOKEN: ${{ secrets.github_token }}
+        OPENAI_API_KEY: ${{ secrets.ai_api_key }}
+        GITHUB_REPOSITORY: ${{ inputs.repository }}
+        PR_NUMBER: ${{ inputs.event.pull_request.number }}
+        COMMIT_ID: ${{ inputs.event.pull_request.head.sha }}
+      run: python main.py
+      shell: bash
