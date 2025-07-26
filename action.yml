@@ -1,5 +1,5 @@
 name: AI PR Review
-description: "A custom action that greets a user using Python"
+description: "A PR reviewer AI that performs a simple review based on a rules file."
 
 on:
   workflow_call:
@@ -39,7 +39,7 @@ runs:
         GITHUB_TOKEN: ${{ secrets.github_token }}
         OPENAI_API_KEY: ${{ secrets.ai_api_key }}
         GITHUB_REPOSITORY: ${{ inputs.repository }}
-        PR_NUMBER: ${{ inputs.event.pull_request.number }}
-        COMMIT_ID: ${{ inputs.event.pull_request.head.sha }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        COMMIT_ID: ${{ inputs.commit_id }}
       run: python main.py
       shell: bash
