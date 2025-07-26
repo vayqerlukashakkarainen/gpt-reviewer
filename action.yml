@@ -1,5 +1,4 @@
 name: AI PR Review
-description: "A PR reviewer AI that performs a simple review based on a rules file."
 
 on:
   workflow_call:
@@ -19,27 +18,31 @@ on:
       ai_api_key:
         required: true
 
-runs:
-  using: "composite"
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.repository }}
+          token: ${{ secrets.github_token }}
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-    - name: Install dependencies
-      run: pip install openai requests
-      shell: bash
+      - name: Install dependencies
+        run: pip install openai requests
+        shell: bash
 
-    - name: Run AI Reviewer
-      env:
-        GITHUB_TOKEN: ${{ secrets.github_token }}
-        OPENAI_API_KEY: ${{ secrets.ai_api_key }}
-        GITHUB_REPOSITORY: ${{ inputs.repository }}
-        PR_NUMBER: ${{ inputs.pr_number }}
-        COMMIT_ID: ${{ inputs.commit_id }}
-      run: python main.py
-      shell: bash
+      - name: Run AI Reviewer
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+          OPENAI_API_KEY: ${{ secrets.ai_api_key }}
+          GITHUB_REPOSITORY: ${{ inputs.repository }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          COMMIT_ID: ${{ inputs.commit_id }}
+        run: python main.py
+        shell: bash
