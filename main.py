@@ -54,7 +54,6 @@ def get_ai_review(rules, filename, patch):
         Do not include comments or pre/post text.
         """
         
-    print(prompt)
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
@@ -123,15 +122,17 @@ def main():
         patch = additions[file_path]
 
         ai_output = get_ai_review(rules, file_path, patch)
+        clean_ai_output = ai_output.replace("```json", "").replace("```", "").strip()
 
         try:
             import json
-            suggestions = json.loads(ai_output)
+            suggestions = json.loads(clean_ai_output)
             for suggestion in suggestions:
                 print(f"👉 Posting suggestion {suggestion}")
                 post_inline_comment(suggestion["comment"], file_path, suggestion["line"])
         except Exception as e:
             print(f"⚠️ Could not parse suggestions for {file_path}: {e}\nAI Output:\n{ai_output}")
+            print(f"⚠️ Cleaned:\n{clean_ai_output}")
 
 if __name__ == "__main__":
     main()
