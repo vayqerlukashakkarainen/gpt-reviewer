@@ -10,6 +10,9 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
+
+ignored_files = [".project-rules.md"]
+
 def get_pr_files():
     url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/pulls/{PR_NUMBER}/files"
     headers = {
@@ -99,6 +102,9 @@ def get_pr_additions_only(files):
 
     return additions_by_file
 
+def ignore_file(file_name):
+    return file_name in ignored_files
+
 def main():
     rules = load_rules()
     files = get_pr_files()
@@ -108,19 +114,24 @@ def main():
         if file.get("patch") is None:
             continue
 
-        filename = file["filename"]
-        patch = additions[filename]
+        file_path = file["filename"]
+        filename = os.path.basename(file_path)
+        
+        if ignore_file(filename):
+            continue
+        
+        patch = additions[file_path]
 
-        ai_output = get_ai_review(rules, filename, patch)
+        ai_output = get_ai_review(rules, file_path, patch)
 
         try:
             import json
             suggestions = json.loads(ai_output)
             for suggestion in suggestions:
                 print(f"👉 Posting suggestion {suggestion}")
-                post_inline_comment(suggestion["comment"], filename, suggestion["line"])
+                post_inline_comment(suggestion["comment"], file_path, suggestion["line"])
         except Exception as e:
-            print(f"⚠️ Could not parse suggestions for {filename}: {e}\nAI Output:\n{ai_output}")
+            print(f"⚠️ Could not parse suggestions for {file_path}: {e}\nAI Output:\n{ai_output}")
 
 if __name__ == "__main__":
     main()
