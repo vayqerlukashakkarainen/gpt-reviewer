@@ -27,7 +27,7 @@ runs:
         python-version: "3.11"
 
     - name: Install dependencies
-      run: pip install openai requests
+      run: pip install openai requests unidiff
       shell: bash
 
     - name: Run AI Reviewer
