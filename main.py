@@ -1,3 +1,4 @@
+from io import StringIO
 import os
 import requests
 from openai import OpenAI
@@ -93,7 +94,7 @@ def get_pr_additions_only(files):
         filename = file["filename"]
         
         additions = []
-        patchset = PatchSet(patch)
+        patchset = PatchSet(StringIO(patch))
 
         for patched_file in patchset:
             print(f"\n📄 File: {patched_file.path}")
