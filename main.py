@@ -1,6 +1,7 @@
 import os
 import requests
 from openai import OpenAI
+from unidiff import PatchSet
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 GITHUB_REPOSITORY = os.environ["GITHUB_REPOSITORY"]
@@ -92,12 +93,14 @@ def get_pr_additions_only(files):
         filename = file["filename"]
         
         additions = []
-        line_nr = 1    
-        for line in patch.splitlines(True):
-            if line.startswith("+"):
-                additions.append("".join([str(line_nr), ". ", line]))
-            
-            line_nr += 1
+        patchset = PatchSet(patch)
+
+        for patched_file in patchset:
+            print(f"\n📄 File: {patched_file.path}")
+            for hunk in patched_file:
+                for line in hunk:
+                    if line.is_added:
+                        additions.append(f"+ Line {line.target_line_no}: {line.value.strip()}")
         
         add_str = "".join(additions)
         
@@ -105,7 +108,7 @@ def get_pr_additions_only(files):
             additions_by_file[filename] = add_str
 
     return additions_by_file
-
+    
 def ignore_file(file_name):
     return file_name in ignored_files
 
