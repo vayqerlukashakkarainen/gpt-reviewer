@@ -97,7 +97,7 @@ def get_pr_additions_only(files):
             if line.startswith("+")
         ]
         
-        add_str = "".join([line, ". ", additions])
+        add_str = "".join([str(line), ". ", additions])
         
         if additions:
             additions_by_file[filename] = add_str
