@@ -83,8 +83,7 @@ def post_inline_comment(comment, path, line):
         
 def get_pr_additions_only(files):
     additions_by_file = {}
-
-    line = 1
+    
     for file in files:
         if file.get("patch") is None:
             continue
@@ -92,17 +91,18 @@ def get_pr_additions_only(files):
         patch = file["patch"]
         filename = file["filename"]
         
-        additions = [
-            line for line in patch.splitlines(True)
-            if line.startswith("+")
-        ]
+        additions = []
+        line_nr = 1    
+        for line in patch.splitlines(True):
+            if line.startswith("+"):
+                additions.append("".join([str(line_nr), ". ", line]))
+            
+            line_nr += 1
         
-        add_str = "".join([str(line), ". ", additions])
+        add_str = "".join(additions)
         
         if additions:
             additions_by_file[filename] = add_str
-        
-        line += 1
 
     return additions_by_file
 
