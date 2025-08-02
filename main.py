@@ -48,6 +48,7 @@ def get_ai_review(rules, filename, patch):
         ...
         ]
 
+        Every diff starts with its line number.
         You must only return raw JSON.
         Do not use any markdown formatting.
         Do not explain anything.
@@ -56,7 +57,8 @@ def get_ai_review(rules, filename, patch):
         
     response = client.chat.completions.create(
         model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
+        messages=[{"role": "system", "content": "You are a helpful senior software engineer reviewing code diffs. You follow the project rules direct and without stray."}, 
+                  {"role": "user", "content": prompt}],
         temperature=0.2
     )
     return response.choices[0].message.content
@@ -82,6 +84,7 @@ def post_inline_comment(comment, path, line):
 def get_pr_additions_only(files):
     additions_by_file = {}
 
+    line = 1
     for file in files:
         if file.get("patch") is None:
             continue
@@ -94,10 +97,12 @@ def get_pr_additions_only(files):
             if line.startswith("+")
         ]
         
-        add_str = "".join(additions)
+        add_str = "".join([line, ". ", additions])
         
         if additions:
             additions_by_file[filename] = add_str
+        
+        line += 1
 
     return additions_by_file
 
