@@ -12,7 +12,6 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-
 ignored_files = [".project-rules.md"]
 
 def get_unified_diff():
@@ -87,7 +86,7 @@ def get_pr_additions_only(diff):
     additions_by_file =  []
     patchset = PatchSet(StringIO(diff))
     
-    print(diff)
+    print(patchset)
     
     for patched_file in patchset:
         print(f"\n📄 File: {patched_file.path}")
