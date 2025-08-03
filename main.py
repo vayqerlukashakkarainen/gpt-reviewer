@@ -15,15 +15,15 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 ignored_files = [".project-rules.md"]
 
-def get_pr_files():
+def get_unified_diff():
     url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/pulls/{PR_NUMBER}/files"
     headers = {
         "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github+json"
+        "Accept": "application/vnd.github.v3.diff"
     }
     r = requests.get(url, headers=headers)
     r.raise_for_status()
-    return r.json()
+    return r.text
 
 def load_rules():
     with open(".project-rules.md", "r") as f:
@@ -83,30 +83,26 @@ def post_inline_comment(comment, path, line):
     else:
         print(f"❌ Error: {res.status_code} - {res.text}")
         
-def get_pr_additions_only(files):
-    additions_by_file = {}
+def get_pr_additions_only(diff):
+    additions_by_file =  []
+    patchset = PatchSet(StringIO(diff))
     
-    for file in files:
-        if file.get("patch") is None:
-            continue
-        
-        patch = file["patch"]
-        filename = file["filename"]
-        
+    for patched_file in patchset:
+        print(f"\n📄 File: {patched_file.path}")
         additions = []
-        patchset = PatchSet(StringIO(patch))
-
-        for patched_file in patchset:
-            print(f"\n📄 File: {patched_file.path}")
-            for hunk in patched_file:
-                for line in hunk:
-                    if line.is_added:
-                        additions.append(f"+ Line {line.target_line_no}: {line.value.strip()}")
+     
+        for hunk in patched_file:
+            for line in hunk:
+                if line.is_added:
+                    additions.append(f"+ Line {line.target_line_no}: {line.value.strip()}")
         
         add_str = "".join(additions)
         
         if additions:
-            additions_by_file[filename] = add_str
+            additions_by_file.append({
+                "patch": add_str,
+                "filename": patched_file.path
+            })
 
     return additions_by_file
     
@@ -115,20 +111,17 @@ def ignore_file(file_name):
 
 def main():
     rules = load_rules()
-    files = get_pr_files()
-    additions = get_pr_additions_only(files)
+    diff = get_unified_diff()
+    file_additions = get_pr_additions_only(diff)
 
-    for file in files:
-        if file.get("patch") is None:
-            continue
-
-        file_path = file["filename"]
+    for additions in file_additions:
+        file_path = additions["filename"]
         filename = os.path.basename(file_path)
         
         if ignore_file(filename):
             continue
         
-        patch = additions[file_path]
+        patch = additions["patch"]
 
         ai_output = get_ai_review(rules, file_path, patch)
         clean_ai_output = ai_output.replace("```json", "").replace("```", "").strip()
