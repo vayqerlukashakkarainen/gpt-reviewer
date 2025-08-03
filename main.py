@@ -87,6 +87,8 @@ def get_pr_additions_only(diff):
     additions_by_file =  []
     patchset = PatchSet(StringIO(diff))
     
+    print(diff)
+    
     for patched_file in patchset:
         print(f"\n📄 File: {patched_file.path}")
         additions = []
