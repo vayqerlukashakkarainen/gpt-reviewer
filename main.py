@@ -15,7 +15,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 ignored_files = [".project-rules.md"]
 
 def get_unified_diff():
-    url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/pulls/{PR_NUMBER}/files"
+    url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/pulls/{PR_NUMBER}"
     headers = {
         "Authorization": f"Bearer {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3.diff"
