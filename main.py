@@ -1,16 +1,16 @@
 from io import StringIO
 import os
 import requests
-from openai import OpenAI
 from unidiff import PatchSet
+
+from ai_provider import AIProvider, AnthropicAIProvider, OpenAIProvider
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 GITHUB_REPOSITORY = os.environ["GITHUB_REPOSITORY"]
 PR_NUMBER = os.environ["PR_NUMBER"]
 COMMIT_ID = os.environ["COMMIT_ID"]
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
-
-client = OpenAI(api_key=OPENAI_API_KEY)
+AI_PROVIDER = os.environ.get("AI_PROVIDER", "openai").lower()
+AI_API_KEY = os.environ["AI_API_KEY"]
 
 ignored_files = [".project-rules.md"]
 
@@ -28,41 +28,16 @@ def load_rules():
     with open(".project-rules.md", "r") as f:
         return f.read()
 
-def get_ai_review(rules, filename, patch):
-    prompt = f"""
-        You are a strict code reviewer. Below are the project rules:
-
-        {rules}
-
-        Here is a code diff for the file `{filename}`:
-
-        ```
-        {patch}
-        ```
-
-        Identify any rule violations based on the provided rules. For each one, return only a JSON like:
-        [
-        {{
-            "line": <line number in the diff>,
-            "comment": "<suggestion or warning>"
-        }},
-        ...
-        ]
-
-        Every diff starts with its line number.
-        You must only return raw JSON.
-        Do not use any markdown formatting.
-        Do not explain anything.
-        Do not include comments or pre/post text.
-        """
-        
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "system", "content": "You are a helpful senior software engineer reviewing code diffs. You follow the project rules direct and without stray."}, 
-                  {"role": "user", "content": prompt}],
-        temperature=0.2
-    )
-    return response.choices[0].message.content
+def get_ai_review(rules, filename, patch, ai_provider):
+    match ai_provider:
+        case "openai":
+            provider = OpenAIProvider(AI_API_KEY)
+            return provider.get_review(rules, filename, patch)
+        case "antrophic":
+            provider = AnthropicAIProvider(AI_API_KEY)
+            return provider.get_review(rules, filename, patch)
+        case _:
+            raise ValueError(f"Unsupported AI provider: {AI_PROVIDER}")
 
 def post_inline_comment(comment, path, line):
     url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/pulls/{PR_NUMBER}/comments"

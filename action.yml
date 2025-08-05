@@ -14,8 +14,12 @@ inputs:
   github_token:
     description: "GitHub token for authentication"
     required: true
+  ai_provider:
+    description: "AI provider to use (openai, anthropic)"
+    required: false
+    default: "openai"
   ai_api_key:
-    description: "API key for OpenAI or similar"
+    description: "API key for the selected AI provider"
     required: true
 
 runs:
@@ -27,14 +31,15 @@ runs:
         python-version: "3.11"
 
     - name: Install dependencies
-      run: pip install openai requests unidiff
+      run: pip install openai anthropic requests unidiff
       shell: bash
 
     - name: Run AI Reviewer
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
-        OPENAI_API_KEY: ${{ inputs.ai_api_key }}
+        AI_PROVIDER: ${{ inputs.ai_provider }}
+        AI_API_KEY: ${{ inputs.ai_api_key }}
         GITHUB_REPOSITORY: ${{ inputs.repository }}
         PR_NUMBER: ${{ inputs.pr_number }}
         COMMIT_ID: ${{ inputs.commit_id }}
