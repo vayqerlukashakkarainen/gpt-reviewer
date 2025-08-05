@@ -86,9 +86,9 @@ Add your AI provider API key to GitHub repository secrets:
 
 | Input | Description | Required |
 |-------|-------------|----------|
-| `repository` | Repository name (owner/repo) | Yes |
-| `pr_number` | Pull request number | Yes |
-| `commit_id` | Commit SHA to review | Yes |
-| `github_token` | GitHub token for API access | Yes |
+| `repository` | Repository name (owner/repo) | Fetched automatically |
+| `pr_number` | Pull request number | Fetched automatically |
+| `commit_id` | Commit SHA to review | Fetched automatically |
+| `github_token` | GitHub token for API access | Fetched automatically |
 | `ai_provider` | AI provider (`openai` or `anthropic`) | No (default: `openai`) |
 | `ai_api_key` | API key for selected AI provider | Yes |
