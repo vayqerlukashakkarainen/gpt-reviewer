@@ -10,7 +10,7 @@ class AIProvider:
         self.api_key = api_key
         
     @abstractmethod
-    def init_client():
+    def init_client(self):
         pass
     
     @abstractmethod
@@ -22,8 +22,7 @@ class OpenAIProvider(AIProvider):
         super().__init__(api_key)
         self.client = self.init_client()
         
-    def init_client():
-
+    def init_client(self):
         return OpenAI(api_key=super.api_key)
     
     def get_review(self, rules, filename, patch):
@@ -43,7 +42,7 @@ class AnthropicAIProvider(AIProvider):
         super().__init__(api_key)
         self.client = self.init_client()
         
-    def init_client():
+    def init_client(self):
         return anthropic.Anthropic(api_key=super.api_key)
     
     def get_review(self, rules, filename, patch):
