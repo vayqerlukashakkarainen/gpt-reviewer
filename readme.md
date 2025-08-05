@@ -21,7 +21,37 @@ Create `.project-rules.md` in your repository root:
 - Validate all user inputs
 ```
 
-### 2. Add GitHub Action
+### 2. Configure File Ignoring (Optional)
+
+Create `.ignore` in your repository root to exclude files from review using gitignore syntax:
+
+```
+# Ignore log files
+*.log
+*.tmp
+
+# Ignore build directories
+node_modules/
+dist/
+build/
+
+# Ignore environment files
+.env
+.env.local
+
+# Ignore Python cache
+*.pyc
+__pycache__/
+
+# Ignore test files
+test_*.py
+*_test.py
+
+# Ignore system files
+.DS_Store
+```
+
+### 3. Add GitHub Action
 
 Create `.github/workflows/pr-review.yml`:
 
@@ -47,7 +77,7 @@ jobs:
           ai_api_key: ${{ secrets.AI_API_KEY }}
 ```
 
-### 3. Configure Secrets
+### 4. Configure Secrets
 
 Add your AI provider API key to GitHub repository secrets:
 - `AI_API_KEY` for whatever provider you choose

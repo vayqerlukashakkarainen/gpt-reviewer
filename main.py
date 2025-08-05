@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+import fnmatch
 from unidiff import PatchSet
 from ai_provider import AnthropicAIProvider, OpenAIProvider
 
@@ -12,6 +13,24 @@ AI_PROVIDER = os.environ.get("AI_PROVIDER", "openai").lower()
 AI_API_KEY = os.environ["AI_API_KEY"]
 
 ignored_files = [".project-rules.md"]
+
+def load_ignore_patterns():
+    ignore_patterns = []
+    ignore_file_path = ".ignore"
+    
+    if os.path.exists(ignore_file_path):
+        try:
+            with open(ignore_file_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    # Skip empty lines and comments
+                    if line and not line.startswith("#"):
+                        ignore_patterns.append(line)
+            print(f"✅ Loaded {len(ignore_patterns)} ignore patterns from ignore file")
+        except Exception as e:
+            print(f"⚠️ Error reading ignore file: {e}")
+    
+    return ignore_patterns
 
 def get_unified_diff():
     url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/pulls/{PR_NUMBER}"
@@ -79,19 +98,48 @@ def get_pr_additions_only(diff):
 
     return additions_by_file
     
-def ignore_file(file_name):
-    return file_name in ignored_files
+def ignore_file(file_path, ignore_patterns):
+    filename = os.path.basename(file_path)
+    
+    # Check hardcoded ignored files
+    if filename in ignored_files:
+        return True
+    
+    # Check against ignore patterns
+    for pattern in ignore_patterns:
+        # Handle directory patterns (ending with /)
+        if pattern.endswith("/"):
+            dir_pattern = pattern.rstrip("/")
+            if "/" in file_path and fnmatch.fnmatch(os.path.dirname(file_path), dir_pattern):
+                return True
+            if fnmatch.fnmatch(filename, dir_pattern):
+                return True
+        # Handle negation patterns (starting with !)
+        elif pattern.startswith("!"):
+            # Negation patterns override previous matches - not implemented for simplicity
+            continue
+        # Handle full path patterns
+        elif "/" in pattern:
+            if fnmatch.fnmatch(file_path, pattern):
+                return True
+        # Handle filename patterns
+        else:
+            if fnmatch.fnmatch(filename, pattern):
+                return True
+    
+    return False
 
 def main():
     rules = load_rules()
+    ignore_patterns = load_ignore_patterns()
     diff = get_unified_diff()
     file_additions = get_pr_additions_only(diff)
 
     for additions in file_additions:
         file_path = additions["filename"]
-        filename = os.path.basename(file_path)
         
-        if ignore_file(filename):
+        if ignore_file(file_path, ignore_patterns):
+            print(f"⏭️ Skipping ignored file: {file_path}")
             continue
         
         patch = additions["patch"]

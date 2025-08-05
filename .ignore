@@ -1,0 +1,11 @@
+# Test ignore file with gitignore syntax
+*.log
+*.tmp
+node_modules/
+dist/
+build/
+.env
+*.pyc
+__pycache__/
+.DS_Store
+test_*.py
