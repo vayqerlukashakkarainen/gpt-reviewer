@@ -1,9 +1,8 @@
-from io import StringIO
 import os
+import json
 import requests
 from unidiff import PatchSet
-
-from ai_provider import AIProvider, AnthropicAIProvider, OpenAIProvider
+from ai_provider import AnthropicAIProvider, OpenAIProvider
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 GITHUB_REPOSITORY = os.environ["GITHUB_REPOSITORY"]
@@ -101,7 +100,6 @@ def main():
         clean_ai_output = ai_output.replace("```json", "").replace("```", "").strip()
 
         try:
-            import json
             suggestions = json.loads(clean_ai_output)
             for suggestion in suggestions:
                 print(f"👉 Posting suggestion {suggestion}")

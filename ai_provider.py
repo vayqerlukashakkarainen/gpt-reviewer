@@ -2,8 +2,8 @@ from abc import abstractmethod
 from openai import OpenAI
 import anthropic
 
-system_message = "You are a helpful senior software engineer reviewing code diffs. You follow the project rules direct and without stray."
-temperature = 0.2
+SYSTEM_MESSAGE = "You are a helpful senior software engineer reviewing code diffs. You follow the project rules direct and without stray."
+TEMPRATURE = 0.2
 
 class AIProvider:
     def __init__(self, api_key):
@@ -30,10 +30,10 @@ class OpenAIProvider(AIProvider):
         response = self.client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": system_message},
+                {"role": "system", "content": SYSTEM_MESSAGE},
                 {"role": "user", "content": prompt}
             ],
-            temperature=temperature
+            temperature=TEMPRATURE
         )
         return response.choices[0].message.content
     
@@ -50,8 +50,8 @@ class AnthropicAIProvider(AIProvider):
         response = self.client.messages.create(
             model="claude-3-5-sonnet-20241022",
             max_tokens=4000,
-            temperature=temperature,
-            system=system_message,
+            temperature=TEMPRATURE,
+            system=SYSTEM_MESSAGE,
             messages=[{"role": "user", "content": prompt}]
         )
         return response.content[0].text

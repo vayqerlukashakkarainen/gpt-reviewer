@@ -1,0 +1,5 @@
+[MESSAGE CONTROL]
+disable = missing-class-docstring,
+          trailing-whitespace,
+          missing-function-docstring,
+          missing-module-docstring
