@@ -97,7 +97,7 @@ def main():
         
         patch = additions["patch"]
 
-        ai_output = get_ai_review(rules, file_path, patch)
+        ai_output = get_ai_review(rules, file_path, patch, AI_PROVIDER)
         clean_ai_output = ai_output.replace("```json", "").replace("```", "").strip()
 
         try:
