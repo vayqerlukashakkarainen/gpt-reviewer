@@ -23,7 +23,7 @@ class OpenAIProvider(AIProvider):
         self.client = self.init_client()
         
     def init_client(self):
-        return OpenAI(api_key=super.api_key)
+        return OpenAI(api_key=self.api_key)
     
     def get_review(self, rules, filename, patch):
         prompt = build_prompt(rules, filename, patch)
@@ -43,7 +43,7 @@ class AnthropicAIProvider(AIProvider):
         self.client = self.init_client()
         
     def init_client(self):
-        return anthropic.Anthropic(api_key=super.api_key)
+        return anthropic.Anthropic(api_key=self.api_key)
     
     def get_review(self, rules, filename, patch):
         prompt = build_prompt(rules, filename, patch)
