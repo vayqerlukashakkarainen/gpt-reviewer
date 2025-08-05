@@ -44,14 +44,13 @@ jobs:
           commit_id: ${{ github.event.pull_request.head.sha }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           ai_provider: "openai"  # or "anthropic"
-          ai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          ai_api_key: ${{ secrets.AI_API_KEY }}
 ```
 
 ### 3. Configure Secrets
 
 Add your AI provider API key to GitHub repository secrets:
-- `OPENAI_API_KEY` for OpenAI
-- `ANTHROPIC_API_KEY` for Anthropic
+- `AI_API_KEY` for whatever provider you choose
 
 ## Configuration
 
